@@ -53,7 +53,7 @@ This project uses the **UNSW-NB15 dataset**, a benchmark dataset for network int
 | Random Forest | 0.885 | 0.971 | 0.793 | 0.873 | 0.979 |
 | HistGradientBoosting | 0.877 | 0.972 | 0.777 | 0.864 | 0.980 |
 | **Soft Voting Ensemble**| **0.879** | **0.971** | **0.782** | **0.866** | **0.980** |
-*(Results are from the test set evaluation)*
+
 
  The **Random Forest Classifier** achieved the highest F1-score, making it the top-performing individual model. The **Soft Voting Ensemble** showed comparable performance, offering robust predictions but without a significant boost over the best single model. All top models demonstrated a trade-off between **high precision** (few false alarms) and slightly **lower recall** (some attacks missed).
 
