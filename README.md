@@ -6,11 +6,6 @@
 
 This project applies **ensemble learning techniques** to the UNSW-NB15 dataset for network intrusion detection. The goal is to build robust models and compare their performance, ultimately using **soft voting** to combine the best models for improved accuracy and generalization. A key challenge is the severe **class imbalance** in the original data, which was addressed by creating balanced samples for training and testing.
 
-I experimented with:
-
-  - **Random Forest (RF)**
-  - **HistGradientBoosting (HGB)**
-  - **Soft Voting Classifier** (RF + HGB)
 
 -----
 
@@ -23,41 +18,56 @@ This project uses the **UNSW-NB15 dataset**, a benchmark dataset for network int
 ## Workflow
 
 1.  **Data Preprocessing & Sampling**
+    * Created balanced training (8,000 samples) and testing (4,000 samples) sets using **stratified sampling** to handle the dataset's class imbalance.
+    * Applied **one-hot encoding** to categorical features (`proto`, `service`, `state`).
+    * Dropped the `attack_cat` column to prevent data leakage during training.
 
-      * Created balanced training (8,000 samples) and testing (4,000 samples) sets using **stratified sampling** to handle class imbalance.
-      * Applied **one-hot encoding** to categorical features (`proto`, `service`, `state`).
-      * Dropped the `attack_cat` column to prevent data leakage.
+2.  **Baseline Model Tournament**
+    * Conducted an initial tournament with five different models: **Logistic Regression, Decision Tree, Random Forest, HistGradientBoosting, and K-Nearest Neighbors**.
+    * Each model was evaluated on the hold-out test set to establish a performance baseline and identify the most promising candidates for further optimization.
 
-2.  **Feature Selection**
+3.  **Feature Selection & Optimization**
+    * Based on the initial results, **Random Forest** and **HistGradientBoosting** were selected as the top-performing models.
+    * To improve these models, highly redundant features with a **correlation greater than 0.9** were removed.
+    * The **bottom 20% of least important features** were pruned using Random Forest's feature importance scores.
 
-      * Removed highly redundant features with a **correlation greater than 0.9**.
-      * Pruned the **bottom 20% of least important features** using Random Forest's feature importance scores.
+4.  **Model Tuning & Ensembling**
+    * Tuned hyperparameters for both Random Forest and HistGradientBoosting using **RandomizedSearchCV** with 5-fold cross-validation, optimizing for the F1-score.
+    * Combined the two optimized models into a **Soft Voting Ensemble** with equal weights to create a more robust final model.
 
-3.  **Model Tuning & Training**
-
-      * Tuned hyperparameters for both Random Forest and HistGradientBoosting using **RandomizedSearchCV** with 5-fold cross-validation, optimizing for F1-score.
-      * Trained the tuned models on the reduced feature set.
-      * Combined the optimized models into a **Soft Voting Ensemble** with equal weights.
-
-4.  **Evaluation**
-
-      * Assessed models using a standard set of metrics: Accuracy, Precision, Recall, F1-score, and ROC AUC.
-      * Validation was performed using **5-fold Stratified K-Fold CV** on the training sample.
+5.  **Evaluation**
+    * Assessed all models using a standard set of metrics: Accuracy, Precision, Recall, F1-score, and ROC AUC.
+    * Validation was performed using **5-fold Stratified K-Fold CV** on the training sample.
 
 -----
 
 ## Results
 
+### Baseline Model Tournament
+
+An initial comparison of five models was performed on the balanced dataset without extensive feature selection or tuning. The results clearly indicated that tree-based ensembles were the most effective.
+
 | Model | Accuracy | Precision | Recall | F1-score | ROC AUC |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Random Forest** | **0.885** | **0.971** | **0.793** | **0.873** | **0.979** |
+| **HistGradientBoosting** | 0.877 | 0.972 | 0.777 | 0.864 | 0.980 |
+| Decision Tree | 0.869 | 0.949 | 0.780 | 0.856 | 0.869 |
+| K-Nearest Neighbors | 0.763 | 0.883 | 0.607 | 0.719 | 0.897 |
+| Logistic Regression | 0.710 | 0.882 | 0.484 | 0.625 | 0.859 |
+
+As shown, **Random Forest** and **HistGradientBoosting** were the clear winners with the highest F1 and ROC AUC scores. In contrast, Logistic Regression struggled significantly with recall, and KNN was less performant and slower in prediction. Based on this, the top two models were selected for further optimization.
+
+### Optimized & Ensemble Model Results
+
+After feature selection and hyperparameter tuning, the final models were evaluated.
+
+| Model (Tuned) | Accuracy | Precision | Recall | F1-score | ROC AUC |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | Random Forest | 0.885 | 0.971 | 0.793 | 0.873 | 0.979 |
 | HistGradientBoosting | 0.877 | 0.972 | 0.777 | 0.864 | 0.980 |
 | **Soft Voting Ensemble**| **0.879** | **0.971** | **0.782** | **0.866** | **0.980** |
 
-
- The **Random Forest Classifier** achieved the highest F1-score, making it the top-performing individual model. The **Soft Voting Ensemble** showed comparable performance, offering robust predictions but without a significant boost over the best single model. All top models demonstrated a trade-off between **high precision** (few false alarms) and slightly **lower recall** (some attacks missed).
-
------
+The **tuned Random Forest Classifier** remained the top-performing individual model. The **Soft Voting Ensemble** delivered comparable, robust predictions but did not provide a significant boost over the best single model in this case. All top models demonstrated a trade-off between **high precision** (few false alarms) and slightly **lower recall** (some attacks missed), which can be adjusted depending on the specific use-case.
 
 ## Key Takeaways & Conclusion
 
